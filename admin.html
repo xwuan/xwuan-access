@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — xwuan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080e1a;
+    --card: #0d1628;
+    --border: rgba(0,220,255,0.12);
+    --cyan: #00dcff;
+    --green: #00ffb3;
+    --red: #ff4466;
+    --muted: rgba(0,220,255,0.35);
+    --text: #cce8ff;
+    --dim: rgba(180,210,255,0.45);
+    --input-bg: #060d1c;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background: var(--bg);
+    font-family: 'Syne', sans-serif;
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(0,180,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,180,255,0.03) 1px, transparent 1px);
+    background-size: 44px 44px;
+    pointer-events: none; z-index: 0;
+  }
+
+  .blob {
+    position: fixed; border-radius: 50%;
+    filter: blur(100px); pointer-events: none; z-index: 0;
+  }
+  .blob-1 { width:500px; height:500px; background: radial-gradient(circle, rgba(0,60,255,0.16), transparent); top:-150px; left:-120px; }
+  .blob-2 { width:400px; height:400px; background: radial-gradient(circle, rgba(0,150,255,0.12), transparent); bottom:-100px; right:-80px; }
+
+  /* ── LOGIN ── */
+  #loginOverlay {
+    position: fixed; inset: 0;
+    background: var(--bg);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .login-box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 22px;
+    padding: 48px 40px;
+    width: 100%;
+    max-width: 400px;
+    position: relative;
+    overflow: hidden;
+    animation: fadeUp 0.4s ease;
+  }
+
+  .login-box::before {
+    content: '';
+    position: absolute; top:0; left:0; right:0; height:1px;
+    background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+  }
+
+  @keyframes fadeUp {
+    from { opacity:0; transform: translateY(20px); }
+    to   { opacity:1; transform: translateY(0); }
+  }
+
+  .login-tag {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.4em;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+
+  .login-title {
+    font-size: 30px;
+    font-weight: 800;
+    background: linear-gradient(135deg, #fff, var(--cyan));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 32px;
+    letter-spacing: -0.02em;
+  }
+
+  .field { margin-bottom: 16px; }
+
+  .field label {
+    display: block;
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    color: var(--muted);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+  }
+
+  input[type=password], input[type=text], input[type=email] {
+    width: 100%;
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    border-radius: 11px;
+    padding: 14px 18px;
+    color: var(--cyan);
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    letter-spacing: 0.04em;
+  }
+  input:focus {
+    border-color: rgba(0,220,255,0.4);
+    box-shadow: 0 0 0 3px rgba(0,220,255,0.07);
+  }
+
+  .btn-primary {
+    width: 100%;
+    padding: 15px;
+    border: none;
+    border-radius: 11px;
+    background: linear-gradient(135deg, #00ccff, #0077ff);
+    color: #001828;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 6px;
+  }
+  .btn-primary:hover { filter: brightness(1.1); transform: translateY(-1px); }
+  .btn-primary:active { transform: scale(0.98); }
+
+  .login-error {
+    color: var(--red);
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    margin-top: 12px;
+    display: none;
+    letter-spacing: 0.05em;
+  }
+
+  /* ── ADMIN UI ── */
+  #adminUI { display: none; position: relative; z-index: 1; }
+
+  .page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 40px 80px;
+  }
+
+  .top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 28px 0 0;
+    margin-bottom: 0;
+  }
+
+  .home-link {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    text-decoration: none;
+    letter-spacing: 0.1em;
+    transition: color 0.2s;
+  }
+  .home-link:hover { color: var(--cyan); }
+
+  .btn-logout {
+    padding: 9px 18px;
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    background: transparent;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-logout:hover { border-color: var(--red); color: var(--red); }
+
+  .admin-header {
+    text-align: center;
+    padding: 52px 0 44px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 48px;
+  }
+
+  .admin-header .tag {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.4em;
+    color: var(--muted);
+    margin-bottom: 18px;
+  }
+
+  .admin-header h1 {
+    font-size: clamp(28px, 4vw, 52px);
+    font-weight: 800;
+    background: linear-gradient(135deg, #fff, var(--cyan), #0066ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -0.02em;
+    margin-bottom: 12px;
+  }
+
+  .admin-header p {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--dim);
+    letter-spacing: 0.08em;
+  }
+
+  /* ── SLOTS GRID ── */
+  .slots-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    align-items: start;
+  }
+
+  .slot-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 32px 28px 26px;
+    position: relative;
+    overflow: hidden;
+    animation: fadeUp 0.4s ease both;
+  }
+  .slot-card:nth-child(1) { animation-delay: 0.05s; }
+  .slot-card:nth-child(2) { animation-delay: 0.12s; }
+  .slot-card:nth-child(3) { animation-delay: 0.19s; }
+
+  .slot-card::before {
+    content: '';
+    position: absolute; top:0; left:0; right:0; height:1px;
+    background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+    opacity: 0.4;
+  }
+
+  .slot-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+  }
+
+  .slot-title {
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--cyan);
+    letter-spacing: 0.04em;
+  }
+
+  .slot-status {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    padding: 5px 12px;
+    border-radius: 20px;
+    border: 1px solid;
+  }
+  .slot-status.active { border-color: var(--green); color: var(--green); }
+  .slot-status.empty  { border-color: var(--muted); color: var(--muted); }
+
+  .slot-card .field { margin-bottom: 14px; }
+
+  .slot-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+  }
+
+  .btn-save {
+    flex: 1;
+    padding: 14px;
+    border: none;
+    border-radius: 11px;
+    background: linear-gradient(135deg, #00ffb3, #00bbff);
+    color: #001828;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-save:hover { filter: brightness(1.1); transform: translateY(-1px); }
+  .btn-save:active { transform: scale(0.97); }
+  .btn-save.saving { opacity: 0.5; pointer-events: none; }
+  .btn-save.saved { background: linear-gradient(135deg, #00ff88, #00cc55) !important; }
+
+  .btn-clear {
+    padding: 14px 18px;
+    border: 1px solid rgba(255,50,80,0.3);
+    border-radius: 11px;
+    background: rgba(255,50,80,0.06);
+    color: var(--red);
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.05em;
+  }
+  .btn-clear:hover { background: rgba(255,50,80,0.14); border-color: rgba(255,50,80,0.5); }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 32px; left: 50%;
+    transform: translateX(-50%) translateY(90px);
+    background: #0a2018;
+    border: 1px solid var(--green);
+    color: var(--green);
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    padding: 13px 30px;
+    border-radius: 40px;
+    letter-spacing: 0.12em;
+    z-index: 999;
+    transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    white-space: nowrap;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* ── TABLET ── */
+  @media (max-width: 960px) {
+    .page { padding: 0 24px 60px; }
+    .slots-grid { grid-template-columns: 1fr 1fr; gap: 18px; }
+    .slot-card:nth-child(3) { grid-column: 1 / -1; max-width: 460px; justify-self: center; width: 100%; }
+    .admin-header { padding: 40px 0 32px; margin-bottom: 36px; }
+  }
+
+  /* ── MOBILE ── */
+  @media (max-width: 600px) {
+    .page { padding: 0 16px 60px; }
+    .top-bar { padding: 20px 0 0; }
+    .admin-header { padding: 32px 0 24px; margin-bottom: 28px; }
+    .admin-header h1 { font-size: 28px; }
+    .slots-grid { grid-template-columns: 1fr; gap: 14px; }
+    .slot-card:nth-child(3) { grid-column: auto; max-width: none; justify-self: auto; }
+    .slot-card { padding: 22px 18px 18px; }
+    .login-box { padding: 36px 24px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="blob blob-1"></div>
+<div class="blob blob-2"></div>
+
+<!-- ── LOGIN ── -->
+<div id="loginOverlay">
+  <div class="login-box">
+    <div class="login-tag">● ADMIN ACCESS</div>
+    <div class="login-title">Đăng nhập</div>
+    <div class="field">
+      <label>Mật khẩu admin</label>
+      <input type="password" id="adminPwInput" placeholder="••••••••" onkeydown="if(event.key==='Enter') doLogin()">
+    </div>
+    <button class="btn-primary" onclick="doLogin()">ĐĂNG NHẬP</button>
+    <div class="login-error" id="loginError">⚠ Sai mật khẩu!</div>
+  </div>
+</div>
+
+<!-- ── ADMIN UI ── -->
+<div id="adminUI">
+  <div class="page">
+    <div class="top-bar">
+      <a href="index.html" class="home-link">← Trang chủ</a>
+      <button class="btn-logout" onclick="doLogout()">ĐĂNG XUẤT</button>
+    </div>
+
+    <div class="admin-header">
+      <div class="tag">● ADMIN PANEL</div>
+      <h1>Quản lý tài khoản</h1>
+      <p>Thay đổi sẽ được cập nhật realtime trên trang chính</p>
+    </div>
+
+    <div class="slots-grid" id="slotsGrid"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getDatabase, ref, onValue, set, remove }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyB3FSIkvSXob6F7MXrfOpw_hN6wHKIbu38",
+    authDomain: "xwuan-access-e9d5e.firebaseapp.com",
+    databaseURL: "https://xwuan-access-e9d5e-default-rtdb.firebaseio.com",
+    projectId: "xwuan-access-e9d5e",
+    storageBucket: "xwuan-access-e9d5e.firebasestorage.app",
+    messagingSenderId: "941977010861",
+    appId: "1:941977010861:web:8edc6af5dddccf4097fc24"
+  };
+
+  const ADMIN_PASSWORD = "admin123"; // ← ĐỔI MẬT KHẨU TẠI ĐÂY
+
+  let db;
+
+  window.doLogin = function() {
+    const pw = document.getElementById('adminPwInput').value;
+    if (pw === ADMIN_PASSWORD) {
+      document.getElementById('loginOverlay').style.display = 'none';
+      document.getElementById('adminUI').style.display = 'block';
+      initAdmin();
+    } else {
+      const err = document.getElementById('loginError');
+      err.style.display = 'block';
+      document.getElementById('adminPwInput').value = '';
+      setTimeout(() => err.style.display = 'none', 3000);
+    }
+  };
+
+  window.doLogout = function() {
+    document.getElementById('loginOverlay').style.display = 'flex';
+    document.getElementById('adminUI').style.display = 'none';
+    document.getElementById('adminPwInput').value = '';
+  };
+
+  function initAdmin() {
+    const app = initializeApp(firebaseConfig);
+    db = getDatabase(app);
+    onValue(ref(db, 'accounts'), (snapshot) => {
+      renderSlots(snapshot.val() || {});
+    });
+  }
+
+  function renderSlots(data) {
+    const grid = document.getElementById('slotsGrid');
+    grid.innerHTML = '';
+    for (let i = 1; i <= 3; i++) {
+      const slot = data[`slot${i}`];
+      const email = slot?.email || '';
+      const password = slot?.password || '';
+      const hasData = !!email;
+
+      const card = document.createElement('div');
+      card.className = 'slot-card';
+      card.innerHTML = `
+        <div class="slot-header">
+          <div class="slot-title">🔐 SLOT ${i}</div>
+          <div class="slot-status ${hasData ? 'active' : 'empty'}">
+            ${hasData ? '● ACTIVE' : '○ TRỐNG'}
+          </div>
+        </div>
+        <div class="field">
+          <label>Email / Tài khoản</label>
+          <input type="email" id="email-${i}" value="${email}" placeholder="example@gmail.com">
+        </div>
+        <div class="field">
+          <label>Mật khẩu</label>
+          <input type="text" id="pass-${i}" value="${password}" placeholder="Nhập mật khẩu">
+        </div>
+        <div class="slot-actions">
+          <button class="btn-save" id="save-${i}" onclick="saveSlot(${i})">↑ LƯU & CẬP NHẬT</button>
+          <button class="btn-clear" onclick="clearSlot(${i})">✕</button>
+        </div>
+      `;
+      grid.appendChild(card);
+    }
+  }
+
+  window.saveSlot = async function(i) {
+    const email = document.getElementById(`email-${i}`).value.trim();
+    const password = document.getElementById(`pass-${i}`).value.trim();
+    const btn = document.getElementById(`save-${i}`);
+    if (!email) { showToast('⚠ Nhập email trước!'); return; }
+    btn.textContent = '⟳ ĐANG LƯU...';
+    btn.classList.add('saving');
+    try {
+      await set(ref(db, `accounts/slot${i}`), { email, password });
+      btn.textContent = '✓ ĐÃ LƯU!';
+      btn.classList.remove('saving');
+      btn.classList.add('saved');
+      showToast(`✓ Slot ${i} đã cập nhật!`);
+      setTimeout(() => { btn.textContent = '↑ LƯU & CẬP NHẬT'; btn.classList.remove('saved'); }, 2500);
+    } catch(e) {
+      btn.textContent = '✕ LỖI — THỬ LẠI';
+      btn.classList.remove('saving');
+      showToast('⚠ Lỗi kết nối Firebase');
+    }
+  };
+
+  window.clearSlot = async function(i) {
+    if (!confirm(`Xóa tài khoản ở Slot ${i}?`)) return;
+    try {
+      await remove(ref(db, `accounts/slot${i}`));
+      showToast(`🗑 Slot ${i} đã xóa`);
+    } catch(e) { showToast('⚠ Lỗi khi xóa'); }
+  };
+
+  let toastTimer;
+  window.showToast = function(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+  };
+</script>
+</body>
+</html>

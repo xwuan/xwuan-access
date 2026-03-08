@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Secure Access — xwuan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080e1a;
+    --card: #0d1628;
+    --border: rgba(0,220,255,0.12);
+    --cyan: #00dcff;
+    --green: #00ffb3;
+    --muted: rgba(0,220,255,0.35);
+    --text: #cce8ff;
+    --dim: rgba(180,210,255,0.45);
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background: var(--bg);
+    font-family: 'Syne', sans-serif;
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(0,180,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,180,255,0.03) 1px, transparent 1px);
+    background-size: 44px 44px;
+    pointer-events: none; z-index: 0;
+  }
+
+  .blob {
+    position: fixed; border-radius: 50%;
+    filter: blur(100px); pointer-events: none; z-index: 0;
+  }
+  .blob-1 { width:600px; height:600px; background: radial-gradient(circle, rgba(0,60,255,0.18), transparent); top:-200px; left:-150px; }
+  .blob-2 { width:500px; height:500px; background: radial-gradient(circle, rgba(0,150,255,0.15), transparent); bottom:-150px; right:-100px; }
+  .blob-3 { width:300px; height:300px; background: radial-gradient(circle, rgba(0,255,180,0.06), transparent); top:40%; left:55%; }
+
+  .page {
+    position: relative; z-index: 1;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 40px 80px;
+  }
+
+  /* ── HEADER ── */
+  header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 72px 0 52px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 52px;
+  }
+
+  .site-tag {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.4em;
+    color: var(--muted);
+    margin-bottom: 20px;
+  }
+
+  header h1 {
+    font-size: clamp(36px, 5.5vw, 70px);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    background: linear-gradient(135deg, #fff 0%, var(--cyan) 55%, #0055ff 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1.05;
+    margin-bottom: 18px;
+  }
+
+  .header-meta {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .header-meta span {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--dim);
+    letter-spacing: 0.08em;
+  }
+
+  .sep { opacity: 0.3; }
+
+  .live-dot {
+    display: inline-block;
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--green);
+    margin-right: 7px;
+    vertical-align: middle;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%,100% { opacity:1; box-shadow: 0 0 0 0 rgba(0,255,179,0.5); }
+    50%      { opacity:.7; box-shadow: 0 0 0 8px rgba(0,255,179,0); }
+  }
+
+  /* ── NOTICE ── */
+  .global-notice {
+    margin-bottom: 44px;
+    animation: fadeUp 0.4s ease both;
+  }
+
+  .notice-box {
+    background: rgba(0,255,179,0.04);
+    border: 1px solid rgba(0,255,179,0.18);
+    border-left: 3px solid var(--green);
+    border-radius: 14px;
+    padding: 18px 24px;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    max-width: 780px;
+    margin: 0 auto;
+  }
+
+  .notice-icon { font-size: 20px; flex-shrink: 0; margin-top: 1px; }
+
+  .notice-text {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: rgba(180,255,220,0.85);
+    line-height: 1.8;
+    letter-spacing: 0.02em;
+  }
+  .notice-text b { color: var(--green); }
+
+  /* ── CARDS GRID ── */
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    align-items: start;
+  }
+
+  /* ── ACCOUNT CARD ── */
+  .account-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 32px 28px 26px;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease;
+    animation: fadeUp 0.5s ease both;
+    display: flex;
+    flex-direction: column;
+  }
+  .account-card:nth-child(1) { animation-delay: 0.05s; }
+  .account-card:nth-child(2) { animation-delay: 0.13s; }
+  .account-card:nth-child(3) { animation-delay: 0.21s; }
+
+  .account-card::before {
+    content: '';
+    position: absolute; top:0; left:0; right:0; height:1px;
+    background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+    opacity: 0.5;
+  }
+
+  .account-card:hover {
+    transform: translateY(-5px);
+    border-color: rgba(0,220,255,0.3);
+    box-shadow: 0 24px 60px rgba(0,80,255,0.12);
+  }
+
+  @keyframes fadeUp {
+    from { opacity:0; transform: translateY(22px); }
+    to   { opacity:1; transform: translateY(0); }
+  }
+
+  .card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+
+  .card-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.35em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  .card-slot-badge {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.2em;
+    background: rgba(0,220,255,0.07);
+    padding: 4px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+  }
+
+  .account-email {
+    font-family: 'Space Mono', monospace;
+    font-size: clamp(12px, 1.3vw, 15px);
+    color: var(--cyan);
+    font-weight: 700;
+    margin-bottom: 26px;
+    word-break: break-all;
+    letter-spacing: 0.03em;
+    line-height: 1.5;
+    flex-grow: 1;
+  }
+
+  .mask-stars { color: rgba(0,180,255,0.4); letter-spacing: -0.04em; }
+
+  .btn-row { display: flex; gap: 10px; }
+
+  .btn-copy {
+    flex: 1;
+    padding: 14px 8px;
+    border: none;
+    border-radius: 11px;
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .btn-copy::after {
+    content: ''; position: absolute; inset: 0;
+    background: rgba(255,255,255,0.12); opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .btn-copy:hover::after { opacity: 1; }
+  .btn-copy:active { transform: scale(0.96); }
+
+  .btn-id   { background: linear-gradient(135deg, #00ccff, #0088ff); color: #001828; }
+  .btn-pass { background: linear-gradient(135deg, #00ffb3, #00bbff); color: #001828; }
+  .btn-copy.copied { background: linear-gradient(135deg, #00ff99, #00cc55) !important; }
+
+  .divider { width:1px; background: var(--border); align-self: stretch; flex-shrink: 0; }
+
+  /* Empty */
+  .empty-card {
+    background: var(--card);
+    border: 1px dashed rgba(0,180,255,0.1);
+    border-radius: 20px;
+    padding: 52px 28px;
+    text-align: center;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    line-height: 1.8;
+    animation: fadeUp 0.5s ease both;
+  }
+
+  /* Loading */
+  #loadingMsg {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 80px 20px;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 0.15em;
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 32px; left: 50%;
+    transform: translateX(-50%) translateY(90px);
+    background: #0a2018;
+    border: 1px solid var(--green);
+    color: var(--green);
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    padding: 13px 30px;
+    border-radius: 40px;
+    letter-spacing: 0.12em;
+    z-index: 999;
+    transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    white-space: nowrap;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* ── NAV TABS ── */
+  .nav-bar {
+    position: fixed;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(8,14,26,0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(0,220,255,0.15);
+    border-radius: 50px;
+    padding: 6px 8px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(0,220,255,0.05);
+  }
+
+  .nav-tab {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 10px 20px;
+    border-radius: 40px;
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    border: none;
+    outline: none;
+  }
+
+  .nav-tab.active {
+    background: linear-gradient(135deg, #00bbdd, #0055ff);
+    color: #fff;
+    box-shadow: 0 4px 18px rgba(0,120,255,0.4);
+  }
+
+  .nav-tab.inactive {
+    color: rgba(0,200,255,0.45);
+    background: transparent;
+  }
+  .nav-tab.inactive:hover {
+    color: var(--cyan);
+    background: rgba(0,220,255,0.08);
+  }
+
+  .nav-sep {
+    width: 1px;
+    height: 20px;
+    background: rgba(0,220,255,0.12);
+  }
+
+  .admin-link {
+    position: fixed; bottom: 22px; right: 26px; z-index: 10;
+    font-family: 'Space Mono', monospace; font-size: 10px;
+    color: rgba(0,180,255,0.18); text-decoration: none;
+    letter-spacing: 0.12em; transition: color 0.2s;
+  }
+  .admin-link:hover { color: var(--cyan); }
+
+  footer {
+    text-align: center;
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.35em;
+    color: rgba(0,150,200,0.18);
+    padding-top: 64px;
+    padding-bottom: 80px;
+  }
+
+  /* ── TABLET ── */
+  @media (max-width: 960px) {
+    .page { padding: 0 24px 60px; }
+    header { padding: 52px 0 36px; margin-bottom: 36px; }
+    .cards-grid { grid-template-columns: 1fr 1fr; gap: 18px; }
+    .account-card:nth-child(3) { grid-column: 1 / -1; max-width: 440px; justify-self: center; width: 100%; }
+    .account-email { font-size: 13px; }
+  }
+
+  /* ── MOBILE ── */
+  @media (max-width: 600px) {
+    .page { padding: 0 16px 60px; }
+    header { padding: 40px 0 28px; margin-bottom: 28px; }
+    header h1 { font-size: 34px; }
+    .header-meta .sep { display: none; }
+    .cards-grid { grid-template-columns: 1fr; gap: 14px; }
+    .account-card:nth-child(3) { grid-column: auto; max-width: none; justify-self: auto; }
+    .account-card { padding: 22px 18px 18px; }
+    .account-email { font-size: 13px; }
+    .notice-box { padding: 14px 16px; gap: 10px; }
+    .notice-text { font-size: 11px; }
+    .btn-copy { font-size: 9px; padding: 12px 6px; }
+    .nav-tab { padding: 9px 14px; font-size: 9px; }
+    .nav-bar { bottom: 18px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="blob blob-1"></div>
+<div class="blob blob-2"></div>
+<div class="blob blob-3"></div>
+
+<div class="page">
+  <header>
+    <div class="site-tag">● xwuan.com / access</div>
+    <h1>Secure Access</h1>
+    <div class="header-meta">
+      <span><span class="live-dot"></span>REAL-TIME SYNC</span>
+      <span class="sep">·</span>
+      <span>ENCRYPTED DATABASE</span>
+      <span class="sep">·</span>
+      <span>3 SLOTS</span>
+    </div>
+  </header>
+
+  <div class="global-notice">
+    <div class="notice-box">
+      <div class="notice-icon">📌</div>
+      <div class="notice-text">
+        <b>Lưu ý quan trọng:</b> Sau khi đăng nhập thành công vào tài khoản, vui lòng
+        <b>báo lại chính xác slot tài khoản đã đăng nhập cho sốp</b> —
+        sốp sẽ gửi các bước hướng dẫn tiếp theo phù hợp.
+      </div>
+    </div>
+  </div>
+
+  <div class="cards-grid" id="cardsContainer">
+    <div id="loadingMsg">
+      <div style="font-size:26px;margin-bottom:12px">⌛</div>
+      ĐANG TẢI DỮ LIỆU...
+    </div>
+  </div>
+
+  <footer>© XWUAN SECURE SYSTEM</footer>
+</div>
+
+<nav class="nav-bar">
+  <a class="nav-tab active" href="index.html">
+    🔐 TÀI KHOẢN
+  </a>
+  <div class="nav-sep"></div>
+  <a class="nav-tab inactive" href="install.html">
+    📲 CÀI ĐẶT APP
+  </a>
+</nav>
+
+<a href="admin.html" class="admin-link">⚙ admin</a>
+<div class="toast" id="toast"></div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyB3FSIkvSXob6F7MXrfOpw_hN6wHKIbu38",
+    authDomain: "xwuan-access-e9d5e.firebaseapp.com",
+    databaseURL: "https://xwuan-access-e9d5e-default-rtdb.firebaseio.com",
+    projectId: "xwuan-access-e9d5e",
+    storageBucket: "xwuan-access-e9d5e.firebasestorage.app",
+    messagingSenderId: "941977010861",
+    appId: "1:941977010861:web:8edc6af5dddccf4097fc24"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+  const container = document.getElementById('cardsContainer');
+
+  function maskEmail(email) {
+    const [local, domain] = email.split('@');
+    if (!local || !domain) return email;
+    const visible = local.slice(0, 4);
+    const stars = '*'.repeat(Math.max(3, local.length - 4));
+    return `${visible}<span class="mask-stars">${stars}</span>@xwuan.com`;
+  }
+
+  function createCard(slot, data) {
+    const card = document.createElement('div');
+    card.className = 'account-card';
+    card.innerHTML = `
+      <div class="card-top">
+        <div class="card-label">Account</div>
+        <div class="card-slot-badge">SLOT ${slot}</div>
+      </div>
+      <div class="account-email">${maskEmail(data.email)}</div>
+      <div class="btn-row">
+        <button class="btn-copy btn-id" onclick="copyText('${data.email}', this, '✓ ID đã sao chép!')">
+          ⧉ SAO CHÉP ID
+        </button>
+        <div class="divider"></div>
+        <button class="btn-copy btn-pass" onclick="copyText('${data.password || ''}', this, '✓ Pass đã sao chép!')">
+          ⧉ SAO CHÉP PASS
+        </button>
+      </div>
+    `;
+    return card;
+  }
+
+  onValue(ref(db, 'accounts'), (snapshot) => {
+    container.innerHTML = '';
+    const data = snapshot.val() || {};
+    for (let i = 1; i <= 3; i++) {
+      const slot = data[`slot${i}`];
+      if (slot && slot.email) {
+        container.appendChild(createCard(i, slot));
+      } else {
+        const empty = document.createElement('div');
+        empty.className = 'empty-card';
+        empty.style.animationDelay = `${(i-1)*0.08}s`;
+        empty.innerHTML = `<div style="font-size:24px;margin-bottom:10px">🔒</div>SLOT ${i}<br>CHƯA CÓ TÀI KHOẢN`;
+        container.appendChild(empty);
+      }
+    }
+  });
+</script>
+
+<script>
+  function copyText(text, btn, msg) {
+    if (!text) { showToast('⚠ Không có dữ liệu!'); return; }
+    const orig = btn.innerHTML;
+    navigator.clipboard.writeText(text).then(() => {
+      btn.innerHTML = '✓ ĐÃ SAO CHÉP';
+      btn.classList.add('copied');
+      showToast(msg);
+      setTimeout(() => { btn.innerHTML = orig; btn.classList.remove('copied'); }, 2000);
+    }).catch(() => {
+      const ta = document.createElement('textarea');
+      ta.value = text; ta.style.cssText = 'position:fixed;opacity:0';
+      document.body.appendChild(ta); ta.select();
+      document.execCommand('copy'); document.body.removeChild(ta);
+      showToast(msg);
+    });
+  }
+
+  let toastTimer;
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+  }
+</script>
+</body>
+</html>
